@@ -30,6 +30,6 @@ func main() {
 		}
 
 		fmt.Printf("server call back:%s,cnt =%d\n", buf, cnt)
-		time.Sleep(10 * time.Second)
+		time.Sleep(1 * time.Second)
 	}
 }
