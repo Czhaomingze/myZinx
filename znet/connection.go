@@ -1,9 +1,10 @@
 package znet
 
 import (
+	"errors"
 	"fmt"
+	"io"
 	"net"
-	"zinx/utils"
 	"zinx/ziface"
 )
 
@@ -45,16 +46,40 @@ func (c *Connection) StartReader() {
 	defer c.Stop()                                                                                         // 1
 
 	for {
-		buf := make([]byte, utils.GlobalObject.MaxPackageSize)
-		_, err := c.Conn.Read(buf)
+		//buf := make([]byte, utils.GlobalObject.MaxPackageSize)
+		//_, err := c.Conn.Read(buf)
+		//if err != nil {
+		//	fmt.Println("recv buf error ", err)
+		//	continue
+		//}
+
+		//进行拆包解包操作
+		dp := DataPack{}
+		headData := make([]byte, dp.GetHeadLen())
+		_, err := io.ReadFull(c.GetTCPConnection(), headData)
 		if err != nil {
-			fmt.Println("recv buf error ", err)
-			continue
+			fmt.Println("read msg head error!", err)
+			break
 		}
 
+		msg, err := dp.Unpack(headData)
+		if err != nil {
+			fmt.Println("unpack error!", err)
+			break
+		}
+
+		//再次读取data部分
+		if msg.GetMsgLen() > 0 {
+			data := make([]byte, msg.GetMsgLen())
+			if _, err := io.ReadFull(c.GetTCPConnection(), data); err != nil {
+				fmt.Println("read data error!", err)
+				break
+			}
+			msg.SetData(data)
+		}
 		req := Request{
 			conn: c,
-			data: buf,
+			msg:  msg,
 		}
 
 		//从路由中找到注册绑定的Conn对应的router调用
@@ -107,7 +132,21 @@ func (c *Connection) RemoteAddr() net.Addr {
 	return c.Conn.RemoteAddr()
 }
 
-//Send 发送数据，将数据发送给客户端
-func (c *Connection) Send(data []byte) error {
+//SendMsg 封包，发送数据，将数据发送给客户端
+func (c *Connection) SendMsg(msgId uint32, data []byte) error {
+	if c.isClosed {
+		return errors.New("Connection closed when send msg")
+	}
+	msg := NewMsgPackage(msgId, data)
+	dp := NewDataPack()
+	binaryMsg, err := dp.Pack(msg)
+	if err != nil {
+		fmt.Println("pack error!", err)
+		return errors.New("pack error msg")
+	}
+	if _, err := c.Conn.Write(binaryMsg); err != nil {
+		fmt.Println("write error!", err)
+		return errors.New("conn write error")
+	}
 	return nil
 }
