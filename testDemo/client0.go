@@ -10,7 +10,7 @@ import (
 
 // 模拟客户端
 func main() {
-	fmt.Println("client start..")
+	fmt.Println("client0 start..")
 	time.Sleep(1 * time.Second)
 
 	// 1 直接连接远程服务器，得到一个conn连接
