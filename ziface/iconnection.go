@@ -20,7 +20,7 @@ type IConnection interface {
 	//RemoteAddr 获取客户端的TCP状态 Ip sort
 	RemoteAddr() net.Addr
 
-	//Send 发送数据，将数据发送给客户端
+	//SendMsg 发送数据，将数据发送给客户端
 	SendMsg(msgId uint32,data []byte) error
 }
 
