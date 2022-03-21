@@ -16,9 +16,11 @@ type GlobalObj struct {
 	Name     string         //当前服务器的名称
 
 	//Zinx
-	Version        string //当前Zinx版本号
-	MaxConn        int    //当前服务器允许的最大连接数
-	MaxPackageSize uint32 //当前Zinx框架数据包的最大值
+	Version           string //当前Zinx版本号
+	MaxConn           int    //当前服务器允许的最大连接数
+	MaxPackageSize    uint32 //当前Zinx框架数据包的最大值
+	WorkerPoolSize    uint32 //当前worker池的Goroutine数量
+	MaxWorkerTaskLen uint32 //Zinx允许用户最多开辟的worker数量（限定条件）
 }
 
 // GlobalObject 定义一个全局的对外GlobalObj
@@ -43,9 +45,11 @@ func init() {
 		Host:           "0.0.0.0",
 		TcpPort:        8999,
 		Name:           "ZinxServerApp",
-		Version:        "V0.7",
+		Version:        "V0.8",
 		MaxConn:        1000,
 		MaxPackageSize: 4096,
+		WorkerPoolSize: 10,
+		MaxWorkerTaskLen: 1024,
 	}
 
 	//应该尝试从conf/zinx.json文件中去加载用户自定义的配置

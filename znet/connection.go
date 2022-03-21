@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"zinx/utils"
 	"zinx/ziface"
 )
 
@@ -79,9 +80,14 @@ func (c *Connection) StartReader() {
 			msg:  msg,
 		}
 
-		//从路由中找到注册绑定的Conn对应的router调用
-		//执行注册的路由方法
-		go c.MsgHandler.DoMsgHandler(&req)
+		if utils.GlobalObject.WorkerPoolSize > 0 {
+			// 已经开启工作池，将消息发送给工作池
+			c.MsgHandler.SendMsgToTaskQueue(&req)
+		} else {
+			// 从路由中，找到注册绑定的connection对应的router调用
+			// 根据绑定好的MsgID找到处理对应API业务 执行
+			go c.MsgHandler.DoMsgHandler(&req)
+		}
 	}
 }
 

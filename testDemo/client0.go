@@ -15,6 +15,7 @@ func main() {
 
 	// 1 直接连接远程服务器，得到一个conn连接
 	conn, err := net.Dial("tcp", "127.0.0.1:8999")
+
 	if err != nil {
 		fmt.Println("client start err, exit!")
 		return
@@ -23,7 +24,7 @@ func main() {
 	for {
 		// 发送封包的 Msg
 		dp := znet.NewDataPack()
-		binaryMsg, err := dp.Pack(znet.NewMsgPackage(0, []byte("ZinxV0.7 client Test Message")))
+		binaryMsg, err := dp.Pack(znet.NewMsgPackage(0, []byte("ZinxV0.8 client Test Message")))
 		if err != nil {
 			fmt.Println("Pack error: ", err)
 			return

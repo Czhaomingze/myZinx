@@ -31,12 +31,15 @@ func (s *Server) Start() {
 
 	fmt.Printf("[START] Server Listener at IP :%s, Port %d, is starting\n", s.IP, s.Port)
 	go func() {
+		// 0 开启一个worker工作池
+		s.MsgHandler.StartWorkerPool()
+		// 1 获取一个TCP的Addr
 		addr, err := net.ResolveTCPAddr(s.IPVersion, fmt.Sprintf("%s:%d", s.IP, s.Port))
 		if err != nil {
 			fmt.Println("resolve tcp addr error: ", err)
 			return
 		}
-
+		// 2 监听服务器的地址
 		listener, err := net.ListenTCP(s.IPVersion, addr)
 		if err != nil {
 			fmt.Println("listen", s.IPVersion, "err", err)
@@ -47,17 +50,25 @@ func (s *Server) Start() {
 
 		var cid uint32
 		cid = 0
+		// 3 阻塞的等待客户端连接，处理客户端连接业务（读写）
 		for {
+			// 3.1 阻塞等待客户端建立连接请求
 			conn, error := listener.AcceptTCP()
 
 			if error != nil {
 				fmt.Println("Accept err", err)
 				continue
 			}
+
+			// 3.2 TODO Server.Start() 设置服务器最大连接控制,如果超过最大连接，那么则关闭此新的连接
+			// 3.3 TODO Server.Start() 处理该新连接请求的 业务 方法， 此时应该有 handler 和 conn是绑定的
 			//echo函数,最大512字节
+			// 将处理新连接的业务方法和conn进行绑定，得到我们定义的连接模块
+
 			dealConn := NewConnection(conn, cid, s.MsgHandler)
 			cid++
 
+			// 启动当前的连接业务处理
 			go dealConn.Start()
 		}
 	}()
