@@ -12,6 +12,8 @@ import (
 //链接模块
 
 type Connection struct {
+	// connection隶属于哪个server
+	TCPServer ziface.IServer
 	//socket TCP 套接字
 	Conn *net.TCPConn
 
@@ -32,8 +34,9 @@ type Connection struct {
 }
 
 //NewConnection 实例化一个链接
-func NewConnection(conn *net.TCPConn, connID uint32, msgHandler ziface.IMsgHandle) *Connection {
+func NewConnection(server ziface.IServer, conn *net.TCPConn, connID uint32, msgHandler ziface.IMsgHandle) *Connection {
 	c := &Connection{
+		TCPServer:  server,
 		Conn:       conn,
 		ConnID:     connID,
 		isClosed:   false,
@@ -41,6 +44,9 @@ func NewConnection(conn *net.TCPConn, connID uint32, msgHandler ziface.IMsgHandl
 		ExitChan:   make(chan bool, 1),
 		msgChan:    make(chan []byte),
 	}
+
+	//将conn添加到server的链接管理器
+	c.TCPServer.GetConnMgr().Add(c)
 	return c
 }
 
@@ -48,7 +54,7 @@ func NewConnection(conn *net.TCPConn, connID uint32, msgHandler ziface.IMsgHandl
 func (c *Connection) StartReader() {
 	fmt.Println("[Reader Goroutine is running...]")
 	defer fmt.Println("connID = ", c.ConnID, ", [Reader is exit!], remote addr is ", c.RemoteAddr().String()) // 2
-	defer c.Stop()                                                                                         // 1
+	defer c.Stop()                                                                                            // 1
 
 	for {
 		//进行拆包解包操作
@@ -116,6 +122,9 @@ func (c *Connection) Start() {
 
 	//TODO 启动从当前连接写数据的业务
 	go c.StartWriter()
+
+	// 执行开发者注册的 OnConnStart 钩子函数
+	c.TCPServer.CallOnConnStart(c)
 }
 
 //Stop 停止链接，结束当前链接的工作
@@ -127,10 +136,16 @@ func (c *Connection) Stop() {
 	}
 
 	c.isClosed = true
+
+	// 调用开发者注册的 OnConnStop 钩子函数
+	c.TCPServer.CallOnConnStop(c)
 	//关闭链接
 	c.Conn.Close()
 
 	c.ExitChan <- true
+
+	//将当前链接从ConnMgr中删除
+	c.TCPServer.GetConnMgr().Remove(c)
 	//关闭管道
 	close(c.ExitChan)
 	close(c.msgChan)
