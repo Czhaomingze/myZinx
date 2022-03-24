@@ -23,6 +23,12 @@ type IConnection interface {
 	//SendMsg 发送数据，将数据发送给客户端
 	SendMsg(msgId uint32,data []byte) error
 
+	//SetProperty 设置链接属性
+	SetProperty(key string,value interface{})
+	//GetProperty 获取链接属性
+	GetProperty(key string)(interface{},error)
+	//RemoveProperty 移除链接属性
+	RemoveProperty(key string)
 }
 
 

@@ -44,12 +44,22 @@ func DoConnectionBegin(conn ziface.IConnection) {
 	if err := conn.SendMsg(202, []byte("DoConnection BEGIN!")); err != nil {
 		fmt.Println(err)
 	}
+
+	conn.SetProperty("name", "zmz")
+	conn.SetProperty("sex", "man")
 }
 
 // DoConnectionLost 连接断开前执行的钩子函数
 func DoConnectionLost(conn ziface.IConnection) {
 	fmt.Println("====> DoConnectionLost is Called...")
 	fmt.Println("conn ID = ", conn.GetConnID(), " is Lost...")
+
+	if name, err := conn.GetProperty("name"); err == nil {
+		fmt.Println("name=", name)
+	}
+	if sex, err := conn.GetProperty("sex"); err == nil {
+		fmt.Println("sex=", sex)
+	}
 }
 
 func main() {
